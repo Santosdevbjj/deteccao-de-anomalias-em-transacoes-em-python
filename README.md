@@ -217,6 +217,31 @@ XGBoost (Limiar Padrão 0.50),"82,65%","89,01%","0,8571","0,8727",10,17
 XGBoost (Limiar Otimizado 0.15),"84,69%","82,18%","0,8342","0,8727",18,15
 
 
+## 4. Resultados Técnicos Comparativos
+
+| Modelo / Configuração | Recall (Fraude) | Precisão (Fraude) | F1-Score | AUPRC | Falsos Positivos (FP) | Falsos Negativos (FN) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Baseline: Logistic Regression** | 91,84% | 6,01% | 0,1129 | 0,7113 | 1.436 | 8 |
+| **Random Forest Classifier** | 75,51% | 96,10% | 0,8457 | 0,8651 | 3 | 24 |
+| **XGBoost (Limiar Padrão 0.50)** | 82,65% | 89,01% | 0,8571 | 0,8727 | 10 | 17 |
+| **XGBoost (Limiar Otimizado 0.15)** | **84,69%** | **82,18%** | **0,8342** | **0,8727** | **18** | **15** |
+
+<p align="center">
+  <img src="assets/curva_precision_recall.png" width="45%" alt="Curva Precision Recall">
+  <img src="assets/matriz_confusao_xgboost.png" width="45%" alt="Matriz de Confusão XGBoost">
+</p>
+
+---
+
+## 6. Explicabilidade do Modelo (XAI via SHAP)
+
+<p align="center">
+  <img src="assets/shap_importance.png" width="80%" alt="SHAP Feature Importance">
+</p>
+
+As variáveis **V14**, **V4**, **V12** e **V10** demonstraram maior peso na atribuição do score de risco de fraude pelo modelo XGBoost.
+
+
 Destaques da Avaliação:Logistic Regression: Apresenta alto Recall (91,84%), mas com 1.436 Falsos Alertas, inviabilizando aoperação pelo alto atrito gerado.Random Forest: Excelente precisão (96,10%), porém muito conservador, deixando passar 24 fraudes (24,5% do total).XGBoost ($p=0.15$): Apresentou o melhor equilíbrio de negócio, recuperando 83 das 98 fraudes do conjunto de teste com apenas 18 falsos alarmes.5. Simulação de Impacto Financeiro (ROI)Com base nos dados reais do teste ($N = 56.962$ transações, $98$ fraudes):Sem Modelo de Machine Learning (Baseline Ingênuo / Aprovar Tudo):Perda por Fraudes Não Detectadas (98 FN): $98 \times \text{R}\$ 500 = \mathbf{\text{R}\$ 49.000,00}$Custo Operacional: R$ 0,00Custo Total da Janela: R$ 49.000,00Com XGBoost Otimizado ($p = 0.15$):Fraudes Detectadas (83 TP): Economia direta de $83 \times \text{R}\$ 500 = \text{R}\$ 41.500,00$.Custo das Fraudes Passadas (15 FN): $15 \times \text{R}\$ 500 = \text{R}\$ 7.500,00$.Custo dos Alertas Falsos (18 FP): $18 \times \text{R}\$ 5 = \text{R}\$ 90,00$.Custo Total Residual: R$ 7.590,00$$\mathbf{\text{Economia Líquida Gerada no Teste: R\$ 41.410,00 (Redução de 84,5\% nos Custos)}}$$
 
 
