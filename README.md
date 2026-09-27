@@ -104,6 +104,8 @@ Assumindo um custo médio por fraude não detectada de R\$ 500,00 e um custo ope
 # 1. Clone o repositório
 git clone [https://github.com/Santosdevbjj/deteccao-de-anomalias-em-transacoes-em-python.git](https://github.com/Santosdevbjj/deteccao-de-anomalias-em-transacoes-em-python.git)
 
+```
+
 # 2. Acesse a pasta do projeto
 cd deteccao-de-anomalias-em-transacoes-em-python
 
