@@ -192,7 +192,7 @@ O objetivo do negócio **não é maximizar a acurácia**, mas sim **minimizar o 
 
 ---
 
-## 3. Estratégia da Solução (Ciclo CRISP-DS)
+## 3. Estratégia da Solução
 
 ```text
 [ 1. Entendimento do Negócio ] ──► [ 2. Análise Exploratória & EDA ]
@@ -201,6 +201,8 @@ O objetivo do negócio **não é maximizar a acurácia**, mas sim **minimizar o 
              │
              ▼
 [ 5. Decision Thresholding ]  ──► [ 6. Model Explainability (SHAP) ]
+
+```
 
 ---
 
