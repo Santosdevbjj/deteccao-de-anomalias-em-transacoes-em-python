@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Data Files (Importante: O dataset não deve ser comitado no Git)
+*.csv
+*.gz
+*.zip
+*.parquet
+data/
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# Visual Studio Code / IDEs
+.vscode/
+.idea/
+
+# OS Specific
+.DS_Store
+Thumbs.db
