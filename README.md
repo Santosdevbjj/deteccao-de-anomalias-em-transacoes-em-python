@@ -208,13 +208,7 @@ O objetivo do negócio **não é maximizar a acurácia**, mas sim **minimizar o 
 
 Estratificação Estrita: Utilização de stratify=y no train_test_split (80% treino / 20% teste) preservando exatamente 0,172% de classe positiva nas duas partições.Tratamento de Assimetria e Escala: Transformação logarítmica (log1p) em Amount seguida de padronização z-score (StandardScaler).Seleção de Métrica Prioritária: Utilização exclusiva do AUPRC (Area Under Precision-Recall Curve) como balizador técnico primário, superando a distorção da curva ROC-AUC em desequilíbrios extremos.Calibração Sensível a Custo: Ajuste do limiar de probabilidade de $p = 0.50$ para $p = 0.15$ para capturar mais fraudes mantendo a precisão acima de 80%.
 
-4. Resultados Técnicos ComparativosResultados avaliados no Conjunto de Teste Out-of-Sample ($N = 56.962$ transações, $98$ fraudes reais):
 
-Modelo / Configuração,Recall (Fraude),Precisão (Fraude),F1-Score,AUPRC,Falsos Positivos (FP),Falsos Negativos (FN)
-Baseline: Logistic Regression,"91,84%","6,01%","0,1129","0,7113",1.436,8
-Random Forest Classifier,"75,51%","96,10%","0,8457","0,8651",3,24
-XGBoost (Limiar Padrão 0.50),"82,65%","89,01%","0,8571","0,8727",10,17
-XGBoost (Limiar Otimizado 0.15),"84,69%","82,18%","0,8342","0,8727",18,15
 
 
 ## 4. Resultados Técnicos Comparativos
