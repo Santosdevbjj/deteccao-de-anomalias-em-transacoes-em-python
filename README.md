@@ -119,3 +119,22 @@ pip install -r requirements.txt
 
 # 5. Inicie o Jupyter Notebook
 jupyter notebook notebooks/transacoesCartaoCredito.ipynb
+
+---
+
+## 10. Referências Citadas
+
+​Dal Pozzolo, Andrea et al. Calibrating Probability with Undersampling for Unbalanced Classification. IEEE CIDM, 2015.
+
+​Dal Pozzolo, Andrea et al. Learnings from Credit Card Fraud Detection under the Performance Constraint. Expert Systems with Applications, 2014.
+
+​Dal Pozzolo, Andrea et al. Credit Card Fraud Detection: A Realistic Modeling and a Novel Learning Strategy. IEEE TNNLS, 2018.
+
+​Carcillo, Fabrizio et al. Combining Unsupervised and Supervised Learning in Credit Card Fraud Detection. Information Sciences, 2019.
+
+​Le Borgne, Yann-Aël & Bontempi, Gianluca. Reproducible Machine Learning for Credit Card Fraud Detection - Practical Handbook.
+
+---
+
+
+
