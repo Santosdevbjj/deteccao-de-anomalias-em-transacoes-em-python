@@ -264,6 +264,7 @@ Componente V4: Valores positivos elevados funcionam como acelerador direto de ri
 
 7. Arquitetura do Repositório
 
+```
 deteccao-de-anomalias-em-transacoes-em-python/
 ├── .gitignore
 ├── README.md
@@ -273,8 +274,12 @@ deteccao-de-anomalias-em-transacoes-em-python/
 │   ├── curva_precision_recall.png
 │   ├── matriz_confusao_xgboost.png
 │   └── shap_importance.png
+|── docs/
+|    |── analise.nd
 └── notebooks/
     └── transacoesCartaoCredito.ipynb
+
+```
 
 ---
 
