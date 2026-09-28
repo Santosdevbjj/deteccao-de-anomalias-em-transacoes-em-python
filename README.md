@@ -1,5 +1,14 @@
 # 💳 Detecção de Anomalias e Fraudes em Transações com Cartão de Crédito
 
+
+## Bootcamp Bradesco - GenAI, Dados & Cyber.
+
+<img width="106" height="120" alt="1000133106" src="https://github.com/user-attachments/assets/7fbbba0e-21bc-4fd1-b434-fc14c1033b74" />
+
+
+
+---
+
 > **Projeto de Machine Learning voltado à detecção de fraudes financeiras sob cenários de extremo desequilíbrio de classes, com foco na otimização de métricas de negócio (Recall), calibração de limiar de decisão e explicabilidade via SHAP.**
 
 ---
@@ -315,6 +324,12 @@ Lundberg, S. M., & Lee, S.-I. A Unified Approach to Interpreting Model Predictio
 
 
 
+---
+
+**Autor:** Sérgio Santos — Cientista de Dados | Ambientes Críticos e Governança de Dados
+
+[![Portfólio Sérgio Santos](https://img.shields.io/badge/Portfólio-Sérgio_Santos-111827?style=for-the-badge&logo=githubpages&logoColor=00eaff)](https://portfoliosantossergio.vercel.app)
+[![LinkedIn Sérgio Santos](https://img.shields.io/badge/LinkedIn-Sérgio_Santos-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/santossergioluiz)
 
 
 
