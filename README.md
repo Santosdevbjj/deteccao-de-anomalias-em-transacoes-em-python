@@ -9,6 +9,11 @@
 
 **Bootcamp Bradesco - GenAI, Dados & Cyber (DIO)**
 
+<img width="106" height="120" alt="1000133106" src="https://github.com/user-attachments/assets/6d6254d5-deb4-4e22-a492-3bdbfd391d93" />
+
+---
+
+
 > Fraudes representam **0,172%** das transações. Um modelo que aprova tudo tem 99,8% de acurácia e **zero** utilidade. Este projeto resolve o problema real: **capturar o máximo de fraudes ao menor custo financeiro**, com um modelo que o negócio consegue auditar.
 
 ---
