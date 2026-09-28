@@ -1,341 +1,233 @@
-# 💳 Detecção de Anomalias e Fraudes em Transações com Cartão de Crédito
-
-
-## Bootcamp Bradesco - GenAI, Dados & Cyber.
-
-<img width="106" height="120" alt="1000133106" src="https://github.com/user-attachments/assets/7fbbba0e-21bc-4fd1-b434-fc14c1033b74" />
-
-
-
----
-
-> **Projeto de Machine Learning voltado à detecção de fraudes financeiras sob cenários de extremo desequilíbrio de classes, com foco na otimização de métricas de negócio (Recall), calibração de limiar de decisão e explicabilidade via SHAP.**
-
----
-
-## 1. Problema de Negócio
-
-Empresas do setor financeiro enfrentam desafios constantes na mitigação de transações fraudulentas com cartão de crédito. Cobranças indevidas geram insatisfação, desgaste do relacionamento com o cliente e custos operacionais elevados com reembolsos (*chargebacks*).
-
-O desafio principal consiste em **identificar o maior número possível de fraudes (alto Recall)** mantendo uma taxa controlada de falsos alarme (Precisão equilibrada), reduzindo o impacto financeiro das fraudes operacionais sem bloquear transações legítimas de clientes idôneos.
-
----
-
-## 2. Contexto Operacional e de Dados
-
-O conjunto de dados utilizado é composto por transações reais e anonimizadas realizadas por cartões de crédito europeus em setembro de 2013:
-
-- **Total de Transações:** 284.807 transações ocorridas em um intervalo de 2 dias.
-- **Transações Fraudulentas:** 492 casos.
-- **Proporção da Classe Positiva:** **0,172%** (extrema desproporção entre classes).
-- **Variáveis de Entrada:** 28 variáveis numéricas resultantes da transformação PCA (`V1` a `V28`) para preservar o sigilo das informações, além das variáveis originais `Time` (segundos decorridos desde a primeira transação) e `Amount` (valor financeiro da transação).
-- **Variável Alvo:** `Class` (1 para fraude, 0 para transação legítima).
-
----
-
-## 3. Premissas da Análise e Decisões Técnicas
-
-1. **Acurácia é uma métrica enganosa:** Em bases onde a classe positiva representa apenas 0,172%, um modelo ingênuo que classifica todas as transações como legítimas atinge uma acurácia de 99,82%. Porém, sua utilidade real é **zero**, pois não detecta nenhuma fraude.
-2. **Métricas de Avaliação Oficiais:**
-   - **Recall da Classe 1:** Métrica prioritária (minimizar Falsos Negativos / fraudes não detectadas).
-   - **Área Sob a Curva de Precisão-Revocação (AUPRC):** Recomendada formalmente na literatura técnica para problemas altamente desbalanceados.
-   - **Precision-Recall AUC / F1-Score:** Utilizados para balancear a captura de fraudes sem inflacionar excessivamente os bloqueios indevidos.
-3. **Divisão Estratificada:** A separação em conjuntos de treino e teste utilizou validação cruzada estratificada (`stratify=y`) para manter a proporção exata de 0,172% de fraudes em todas as partições.
-4. **Fonte dos Dados:** O dataset `creditcard.csv` é baixado diretamente em tempo de execução via URL no script/notebook, garantindo a leveza e versionamento limpo do repositório.
-
----
-
-## 4. Estratégia da Solução (Pipeline Técnico)
-
-O desenvolvimento seguiu o fluxo profissional de Ciência de Dados:
-
-1. **Exploração e Diagnóstico:** Análise estatística inicial e validação da distribuição de classes.
-2. **Engenharia de Recursos e Pré-processamento:**
-   - Transformação logarítmica da variável `Amount` (`log_Amount`) para atenuar assimetria e presença de *outliers*.
-   - Padronização das variáveis contínuas (`Time` e `Amount`) utilizando `StandardScaler`.
-3. **Baseline e Modelagem Comparativa:**
-   - **Regressão Logística** (Modelo de Linha de Base com `class_weight='balanced'`).
-   - **Random Forest Classifier** (Com pesos adaptativos para tratar desequilíbrio).
-   - **XGBoost Classifier** (Utilizando o parâmetro `scale_pos_weight`).
-4. **Ajuste Fino de Limiar de Decisão (Decision Threshold Tuning):** Otimização do limiar de probabilidade de corte para maximizar o Recall sem destruir a Precisão.
-5. **Explicabilidade (XAI):** Aplicação da biblioteca `SHAP` (*SHapley Additive exPlanations*) para interpretar quais variáveis mais contribuíram para o diagnóstico de fraude.
-
----
-
-## 5. Resultados e Comparativo dos Modelos
-
-Abaixo estão comparadas as métricas obtidas no conjunto de teste (após o ajuste de limiar de decisão em $p = 0.30$):
-
-| Modelo | Recall (Fraude) | Precisão (Fraude) | F1-Score (Fraude) | AUPRC |
-| :--- | :---: | :---: | :---: | :---: |
-| **Baseline (Regressão Logística)** | 89,8% | 11,2% | 0,199 | 0,724 |
-| **Random Forest** | 82,7% | 88,0% | 0,852 | 0,845 |
-| **XGBoost (Melhor Desempenho)** | **87,8%** | **86,2%** | **0,870** | **0,881** |
-
----
-
-## 6. Insights e Explicabilidade do Modelo (SHAP)
-
-- **Variáveis Mais Críticas:** As componentes principais `V14`, `V10`, `V12` e `V4` demonstraram maior impacto marginal nas previsões de fraude.
-- **Padrão de Valoração:** Valores de `Amount` muito extremos combinados com anomalias em `V14` elevam exponencialmente a probabilidade estimada de a transação ser uma fraude.
-- **Ajuste do Limiar:** Reduzir o limiar padrão de $0.50$ para $0.30$ no XGBoost permitiu capturar $5\%$ adicionais de fraudes reais com uma perda insignificante de precisão.
-
----
-
-## 7. Performance de Negócio (Impacto Financeiro Estimado)
-
-Assumindo um custo médio por fraude não detectada de R\$ 500,00 e um custo operacional de R\$ 10,00 para verificação manual de um Falso Positivo:
-
-- **Modelo Ingênuo (Acurácia 99,8%):** Perda total de R\$ 246.000,00 (100% das fraudes não detectadas).
-- **Modelo XGBoost Otimizado:**
-  - Fraudes Detectadas: ~88% do volume total.
-  - Economia Líquida Estimada: **R\$ 210.000,00+** a cada 280 mil transações processadas, demonstrando o retorno sobre investimento (ROI) claro da solução.
-
----
-
-## 8. Próximos Passos e Evolução
-
-- [ ] Implementar validação temporal (*time-series split*) para avaliar a degradação do modelo frente a *concept drift*.
-- [ ] Avaliar técnicas avançadas de reamostragem combinada (SMOTE + Tomek Links).
-- [ ] Empacotar a inferência do modelo XGBoost em uma API RESTful utilizando **FastAPI** e conteinerização via **Docker**.
-- [ ] Construir monitoramento de desvio de dados (*data drift*) em produção com **Evidently AI**.
-
----
-
-## 9. Como Executar este Projeto Localmente
-
-### Pré-requisitos
-- Python 3.10+
-- Git
-
-### Passo a Passo
-```bash
-# 1. Clone o repositório
-git clone [https://github.com/Santosdevbjj/deteccao-de-anomalias-em-transacoes-em-python.git](https://github.com/Santosdevbjj/deteccao-de-anomalias-em-transacoes-em-python.git)
-
-```
-
-# 2. Acesse a pasta do projeto
-cd deteccao-de-anomalias-em-transacoes-em-python
-
-# 3. Crie e ative um ambiente virtual
-python -m venv venv
-# No Linux/Mac:
-source venv/bin/activate
-# No Windows:
-venv\Scripts\activate
-
-# 4. Instale as dependências
-pip install -r requirements.txt
-
-# 5. Inicie o Jupyter Notebook
-jupyter notebook notebooks/transacoesCartaoCredito.ipynb
-
----
-
-## 10. Referências Citadas
-
-​Dal Pozzolo, Andrea et al. Calibrating Probability with Undersampling for Unbalanced Classification. IEEE CIDM, 2015.
-
-​Dal Pozzolo, Andrea et al. Learnings from Credit Card Fraud Detection under the Performance Constraint. Expert Systems with Applications, 2014.
-
-​Dal Pozzolo, Andrea et al. Credit Card Fraud Detection: A Realistic Modeling and a Novel Learning Strategy. IEEE TNNLS, 2018.
-
-​Carcillo, Fabrizio et al. Combining Unsupervised and Supervised Learning in Credit Card Fraud Detection. Information Sciences, 2019.
-
-​Le Borgne, Yann-Aël & Bontempi, Gianluca. Reproducible Machine Learning for Credit Card Fraud Detection - Practical Handbook.
-
----
----
----
-
-# 💳 End-to-End Credit Card Fraud & Anomaly Detection Engine
+# 💳 Detecção de Fraudes em Cartão de Crédito sob Extremo Desequilíbrio de Classes
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-1.3%2B-orange.svg)](https://scikit-learn.org/)
 [![XGBoost](https://img.shields.io/badge/XGBoost-1.7%2B-green.svg)](https://xgboost.readthedocs.io/)
 [![SHAP](https://img.shields.io/badge/SHAP-XAI-red.svg)](https://shap.readthedocs.io/)
-[![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](LICENSE)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Santosdevbjj/deteccao-de-anomalias-em-transacoes-em-python/blob/main/notebooks/transacoesCartaoCredito.ipynb)
 
-> **Solução de Machine Learning de Alta Performance para Detecção de Anomalias Financeiras sob Extremo Desequilíbrio de Classes (0,172%). Foco em Maximização de ROI, Tunagem de Limiar Sensível a Custos e Explicabilidade Regulatória (SHAP).**
+**Bootcamp Bradesco - GenAI, Dados & Cyber (DIO)**
 
----
-
-## Executive Summary (Resumo Executivo)
-
-Em operações de cartões de crédito, **o custo de uma fraude não detectada (Falso Negativo) é drasticamente superior ao custo de uma verificação indevida (Falso Positivo)**. Modelos ingênuos que buscam acurácia global falham gravemente ao ignorar a assimetria financeira do negócio.
-
-Este projeto desenvolve e avalia um pipeline de detecção de fraudes treinado sobre **284.807 transações reais europeias**, onde apenas **492 (0,172%)** representam fraudes. 
-
-### Principais Resultados Obtidos:
-- **Modelo Campeão:** XGBoost com ajuste de peso de classe (`scale_pos_weight`) e calibração de limiar de decisão em $p = 0,15$.
-- **Performance de Classificação:** **84,69% de Recall** e **82,18% de Precisão** na classe de fraude (vs. 6,01% da Regressão Logística).
-- **Métrica Técnica Chave:** **AUPRC de 0,8727** (Área Sob a Curva de Precisão-Revocação).
-- **Impacto Financeiro Estimado:** Redução de **~R\$ 207.500,00 em perdas por fraude** a cada 280.000 transações processadas, mantendo a taxa de alarme falso dentro da capacidade operacional de análise.
+> Fraudes representam **0,172%** das transações. Um modelo que aprova tudo tem 99,8% de acurácia e **zero** utilidade. Este projeto resolve o problema real: **capturar o máximo de fraudes ao menor custo financeiro**, com um modelo que o negócio consegue auditar.
 
 ---
 
-## 1. Problema de Negócio & Framework de Decisão Econômica
+## 📌 Visão Geral
 
-### O Contexto Financeiro
-A detecção de fraude é um problema de otimização assimétrica de custos. Existem dois tipos de erros operacionais:
-1. **Falso Negativo (FN - Fraude não detectada):** A instituição financeira arca com o reembolso total da transação e custos regulatórios.
-   - *Custo estimado médio ($\text{C}_{\text{FN}}$):* **R\$ 500,00** por ocorrência.
-2. **Falso Positivo (FP - Alerta falso em transação legítima):** Envio de SMS/Push ou bloqueio preventivo.
-   - *Custo operacional estimado ($\text{C}_{\text{FP}}$):* **R\$ 5,00** (custo do canal de comunicação / atrito na experiência do cliente).
+Pipeline de Machine Learning treinado em **284.807 transações reais** de cartões europeus (492 fraudes). Compara três modelos, ajusta o limiar de decisão com base no **custo de negócio** (e não na acurácia) e explica as decisões do modelo com **SHAP**.
 
-### Matriz de Custo Financeiro
-$$\text{Custo Total} = (\text{FN} \times \text{C}_{\text{FN}}) + (\text{FP} \times \text{C}_{\text{FP}})$$
-
-O objetivo do negócio **não é maximizar a acurácia**, mas sim **minimizar o Custo Total**.
+| Indicador (conjunto de teste, 56.962 transações) | Resultado |
+| :--- | :---: |
+| Modelo escolhido | XGBoost, limiar de decisão 0,15 |
+| Recall na classe fraude | **84,69%** (83 de 98 fraudes capturadas) |
+| Precisão na classe fraude | **82,18%** (18 falsos alarmes) |
+| AUPRC | **0,8727** |
+| Redução de custo vs. "aprovar tudo" (simulação) | **84,5%** (R$ 41.410 no teste) |
 
 ---
 
-## 2. Visão Geral dos Dados
+## 1. Problema de Negócio
 
-- **Total de Registros:** 284.807 transações (2 dias de operação).
-- **Transações Legítimas (Classe 0):** 284.315 (99,827%).
-- **Transações Fraudulentas (Classe 1):** 492 (0,172%).
-- **Atributos (`V1` a `V28`):** Componentes Principais obtidas via PCA para preservação do sigilo do usuário.
-- **Atributos Originais:** `Time` (segundos decorridos) e `Amount` (valor em euros/moeda local).
+Fraudes não detectadas geram estorno (*chargeback*), custo regulatório e perda de confiança do cliente. Alertas falsos geram atrito, mas custam muito menos.
 
----
+O desafio: **encontrar o maior número possível de fraudes sem inundar a operação com falsos alarmes**. Na prática, é um problema de **minimização de custo assimétrico**:
 
-## 3. Estratégia da Solução
+`Custo Total = (FN × C_FN) + (FP × C_FP)`
 
-```text
-[ 1. Entendimento do Negócio ] ──► [ 2. Análise Exploratória & EDA ]
-                                             │
-[ 4. Avaliação AUPRC & ROI ]  ◄── [ 3. Preprocessing & Modeling ]
-             │
-             ▼
-[ 5. Decision Thresholding ]  ──► [ 6. Model Explainability (SHAP) ]
+## 2. Contexto
 
+- **Dados:** transações de cartão de crédito de titulares europeus, setembro de 2013, coletadas em colaboração entre Worldline e o grupo de ML da ULB.
+- **Volume:** 284.807 transações em 2 dias; 284.315 legítimas (99,827%) e 492 fraudulentas (0,172%).
+- **Variáveis:** `V1` a `V28` (componentes PCA, anonimizadas por sigilo), `Time` (segundos desde a 1ª transação), `Amount` (valor) e `Class` (1 = fraude, 0 = legítima).
+- **Origem do CSV:** baixado em tempo de execução via URL no notebook. O arquivo não é versionado (ver `.gitignore`).
+
+## 3. Objetivo do Projeto
+
+Demonstrar, ponta a ponta, como tratar um problema de classificação com desequilíbrio extremo: escolher a métrica certa, comparar modelos contra um baseline, calibrar o limiar pelo custo e traduzir o resultado técnico em **reais (R$)**.
+
+## 4. Baseline
+
+Dois pontos de comparação:
+
+1. **Baseline de negócio, "aprovar tudo":** acurácia de 99,83%, Recall de 0%. Custo simulado no teste: **R$ 49.000** (98 fraudes × R$ 500).
+2. **Baseline de ML, Regressão Logística** (`class_weight='balanced'`): Recall alto (91,84%), mas Precisão de apenas 6,01%, gerando cerca de 1,4 mil falsos alarmes no teste.
+
+Qualquer modelo precisa vencer os dois em **custo total**, não em acurácia.
+
+## 5. Premissas
+
+- **A acurácia é descartada** como métrica. As métricas oficiais são **Recall da classe 1**, **Precisão** e **AUPRC** (recomendada pelos autores do dataset para bases desbalanceadas).
+- **Divisão estratificada 80/20** (*hold-out* com `stratify=y`, `random_state=42`): preserva ~0,172% de fraudes no treino (0,00173) e no teste (0,00172).
+- **Custos simulados (hipóteses de negócio, não dados reais):** R$ 500 por fraude não detectada (FN) e R$ 5 por alerta falso (FP). Os valores são fixos por ocorrência e não usam a coluna `Amount`.
+- `Amount` está em euros no dataset original; os custos em R$ são uma simulação ilustrativa.
+
+## 6. Estratégia da Solução
+
+```mermaid
+flowchart LR
+    A[Problema de negócio] --> B[EDA]
+    B --> C[Preparação dos dados]
+    C --> D[Treino: LR, RF, XGBoost]
+    D --> E[Avaliação: AUPRC, Recall, Precisão]
+    E --> F[Limiar por custo]
+    F --> G[Explicabilidade SHAP]
+    G --> H[Impacto em R$]
 ```
 
----
+**Tecnologias:** Python, Pandas e NumPy (dados), Scikit-Learn (baseline, Random Forest, métricas), XGBoost (modelo final), SHAP (explicabilidade), Matplotlib e Seaborn (visualização), Jupyter/Colab (execução).
 
-Estratificação Estrita: Utilização de stratify=y no train_test_split (80% treino / 20% teste) preservando exatamente 0,172% de classe positiva nas duas partições.Tratamento de Assimetria e Escala: Transformação logarítmica (log1p) em Amount seguida de padronização z-score (StandardScaler).Seleção de Métrica Prioritária: Utilização exclusiva do AUPRC (Area Under Precision-Recall Curve) como balizador técnico primário, superando a distorção da curva ROC-AUC em desequilíbrios extremos.Calibração Sensível a Custo: Ajuste do limiar de probabilidade de $p = 0.50$ para $p = 0.15$ para capturar mais fraudes mantendo a precisão acima de 80%.
+## 7. Decisões Técnicas e Trade-offs
 
+| Decisão | Por quê | Trade-off aceito |
+| :--- | :--- | :--- |
+| **AUPRC como métrica principal** | Com 0,17% de positivos, a curva ROC-AUC parece boa mesmo com modelos ruins | Menos intuitiva para públicos não técnicos |
+| **`class_weight` / `scale_pos_weight`** em vez de SMOTE | Trata o desbalanceamento sem gerar dados sintéticos e sem alterar a distribuição do teste | Pode ser menos eficaz que reamostragem combinada (fica como próximo passo) |
+| **XGBoost como modelo final** | Melhor AUPRC (0,8727) e melhor equilíbrio Recall/Precisão | Menos interpretável que a Regressão Logística, compensado com SHAP |
+| **Limiar 0,15 em vez de 0,50** | Um FN custa 100× mais que um FP na simulação | O F1 cai (0,8571 → 0,8342); o ganho depende da razão de custos assumida |
 
+**Limitações conhecidas (transparência técnica):**
 
+- O limiar de 0,15 foi escolhido observando o **próprio conjunto de teste**. Em um cenário real, ele deve ser calibrado em um conjunto de **validação** separado, para não superestimar o resultado.
+- O teste tem apenas **98 fraudes**. Cada fraude a mais ou a menos move o Recall em ~1 ponto percentual. Os resultados têm alta variância.
+- Os `StandardScaler` foram ajustados sobre o dataset inteiro antes da divisão (vazamento leve de estatísticas). Em produção, ajustar apenas no treino.
+- A divisão é aleatória, não temporal. Não há avaliação de degradação por *concept drift*.
 
-## 4. Resultados Técnicos Comparativos
+## 8. Preparação e Análise dos Dados
 
-| Modelo / Configuração | Recall (Fraude) | Precisão (Fraude) | F1-Score | AUPRC | Falsos Positivos (FP) | Falsos Negativos (FN) |
+- **Assimetria de `Amount`:** transformação `log1p` seguida de `StandardScaler` (`Amount_scaled`).
+- **`Time`:** padronizado com `StandardScaler` (`Time_scaled`).
+- **Features finais:** `V1`–`V28` + `Amount_scaled` + `Time_scaled` (30 variáveis).
+- **Limpeza:** o notebook não aplica tratamento adicional de nulos ou duplicados. A inspeção de qualidade de dados é um próximo passo.
+
+<p align="center">
+  <img src="assets/distribui_classe.png" width="55%" alt="Distribuição da variável alvo em escala logarítmica">
+</p>
+
+## 9. Treinamento dos Modelos
+
+| Modelo | Configuração |
+| :--- | :--- |
+| Regressão Logística | `class_weight='balanced'`, `max_iter=1000` |
+| Random Forest | `n_estimators=100`, `class_weight='balanced'` |
+| XGBoost | `scale_pos_weight` = legítimas / fraudes no treino, `eval_metric='logloss'` |
+
+Todos com `random_state=42` para reprodutibilidade.
+
+## 10. Performance dos Modelos
+
+| Modelo / Configuração | Recall | Precisão | F1 | AUPRC | FP | FN |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Baseline: Logistic Regression** | 91,84% | 6,01% | 0,1129 | 0,7113 | 1.436 | 8 |
-| **Random Forest Classifier** | 75,51% | 96,10% | 0,8457 | 0,8651 | 3 | 24 |
-| **XGBoost (Limiar Padrão 0.50)** | 82,65% | 89,01% | 0,8571 | 0,8727 | 10 | 17 |
-| **XGBoost (Limiar Otimizado 0.15)** | **84,69%** | **82,18%** | **0,8342** | **0,8727** | **18** | **15** |
+| Baseline: Regressão Logística | 91,84% | 6,01% | 0,1129 | 0,7113 | ~1,4 mil | 8 |
+| Random Forest | 75,51% | 96,10% | 0,8457 | 0,8651 | 3 | 24 |
+| XGBoost (limiar 0,50) | 82,65% | 89,01% | 0,8571 | 0,8727 | 10 | 17 |
+| **XGBoost (limiar 0,15)** | **84,69%** | **82,18%** | 0,8342 | **0,8727** | **18** | **15** |
 
 <p align="center">
-  <img src="assets/curva_precision_recall.png" width="45%" alt="Curva Precision Recall">
-  <img src="assets/matriz_confusao_xgboost.png" width="45%" alt="Matriz de Confusão XGBoost">
+  <img src="assets/curva_precision_recall.png" width="45%" alt="Curva Precision-Recall dos três modelos">
+  <img src="assets/matriz_confusao_xgboost.png" width="45%" alt="Matriz de confusão do XGBoost com limiar 0,15">
 </p>
 
----
+**Leitura:** a Regressão Logística captura muitas fraudes, mas com atrito inviável. O Random Forest é preciso, porém conservador, deixando passar 24 fraudes (24,5%). O XGBoost com limiar 0,15 entrega o melhor equilíbrio: 83 de 98 fraudes capturadas (TP = 83, FN = 15, FP = 18, TN = 56.846).
 
-## 6. Explicabilidade do Modelo (XAI via SHAP)
+## 11. Business Performance: o erro do modelo em Reais
+
+Simulação no conjunto de teste (56.962 transações, 98 fraudes), com C_FN = R$ 500 e C_FP = R$ 5:
+
+| Cenário | Fraudes capturadas | FN | FP | Custo total | Redução vs. aprovar tudo |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| Aprovar tudo (sem modelo) | 0 | 98 | 0 | R$ 49.000 | n/a |
+| Regressão Logística | 90 | 8 | ~1,4 mil | ~R$ 11.000 | ~77% |
+| Random Forest | 74 | 24 | 3 | R$ 12.015 | 75,5% |
+| XGBoost (limiar 0,50) | 81 | 17 | 10 | R$ 8.550 | 82,6% |
+| **XGBoost (limiar 0,15)** | **83** | **15** | **18** | **R$ 7.590** | **84,5%** |
+
+- **Economia líquida no teste:** R$ 49.000 − R$ 7.590 = **R$ 41.410**.
+- **Efeito do limiar:** baixar de 0,50 para 0,15 economizou R$ 960 no teste, capturando 2 fraudes a mais ao custo de 8 alertas falsos adicionais.
+- **Extrapolação:** a base completa tem 5× o tamanho do teste, o que projeta uma economia estimada de **~R$ 207 mil** (estimativa ilustrativa, sujeita às premissas de custo acima).
+
+## 12. Insights e Explicabilidade (SHAP)
 
 <p align="center">
-  <img src="assets/shap_importance.png" width="80%" alt="SHAP Feature Importance">
+  <img src="assets/shap_importance.png" width="75%" alt="Importância das variáveis via SHAP">
 </p>
 
-As variáveis **V14**, **V4**, **V12** e **V10** demonstraram maior peso na atribuição do score de risco de fraude pelo modelo XGBoost.
+- As variáveis **V14, V4, V12, V10 e V11** são as que mais pesam no score de risco do XGBoost.
+- `Time_scaled` e `Amount_scaled` têm papel secundário frente às componentes PCA.
+- A explicabilidade permite justificar decisões em contextos regulados (LGPD, Bacen), embora as componentes PCA sejam anonimizadas e limitem a interpretação de negócio de cada variável.
+- *Nota metodológica:* o gráfico foi calculado sobre as primeiras 1.000 linhas do teste, uma amostra com poucas fraudes (~0,17% esperado). Para conclusões mais firmes, recalcular com todas as fraudes do teste.
 
+## 13. Resultados e Recomendação
 
-Destaques da Avaliação:Logistic Regression: Apresenta alto Recall (91,84%), mas com 1.436 Falsos Alertas, inviabilizando aoperação pelo alto atrito gerado.Random Forest: Excelente precisão (96,10%), porém muito conservador, deixando passar 24 fraudes (24,5% do total).XGBoost ($p=0.15$): Apresentou o melhor equilíbrio de negócio, recuperando 83 das 98 fraudes do conjunto de teste com apenas 18 falsos alarmes.5. Simulação de Impacto Financeiro (ROI)Com base nos dados reais do teste ($N = 56.962$ transações, $98$ fraudes):Sem Modelo de Machine Learning (Baseline Ingênuo / Aprovar Tudo):Perda por Fraudes Não Detectadas (98 FN): $98 \times \text{R}\$ 500 = \mathbf{\text{R}\$ 49.000,00}$Custo Operacional: R$ 0,00Custo Total da Janela: R$ 49.000,00Com XGBoost Otimizado ($p = 0.15$):Fraudes Detectadas (83 TP): Economia direta de $83 \times \text{R}\$ 500 = \text{R}\$ 41.500,00$.Custo das Fraudes Passadas (15 FN): $15 \times \text{R}\$ 500 = \text{R}\$ 7.500,00$.Custo dos Alertas Falsos (18 FP): $18 \times \text{R}\$ 5 = \text{R}\$ 90,00$.Custo Total Residual: R$ 7.590,00$$\mathbf{\text{Economia Líquida Gerada no Teste: R\$ 41.410,00 (Redução de 84,5\% nos Custos)}}$$
+- **Recomendação:** adotar o XGBoost com limiar 0,15 como candidato à operação, condicionado à recalibração do limiar em base de validação e à validação com os custos reais da instituição.
+- **Por que resolve o problema:** reduz ~84% do custo simulado e mantém a Precisão acima de 80%, ou seja, 4 em cada 5 alertas são fraudes reais.
+- **Alerta:** a decisão depende da razão de custos FN/FP. Se ela mudar, o limiar ótimo muda junto.
 
+## 14. Próximos Passos
 
-Projeção Extrapolada para a Base Total (284.807 transações): Economia estimada superior a R$ 207.000,00.
-
-
----
-
-
-
-6. Explicabilidade do Modelo (XAI via SHAP)
-Para garantir compliance com regulamentações financeiras (e.g., Right to Explanation / LGPD / Bacen), o modelo foi interpretado utilizando SHAP (SHapley Additive exPlanations).
-
-Principais Variáveis Indicadoras de Risco:
-Componente V14: A variável de maior importância global. Valores fortemente negativos aumentam expressivamente o log-odds da probabilidade de fraude.
-
-Componente V10 & V12: Exibem comportamento análogo; reduções nesses índices sinalizam desvio do padrão comportamental legítimo.
-
-Componente V4: Valores positivos elevados funcionam como acelerador direto de risco de anomalia.
-
-7. Arquitetura do Repositório
-
-```
-deteccao-de-anomalias-em-transacoes-em-python/
-├── .gitignore
-├── README.md
-├── requirements.txt
-├── assets/                          <-- PASTA PARA ARMAZENAR OS GRÁFICOS
-│   ├── distribui_classe.png
-│   ├── curva_precision_recall.png
-│   ├── matriz_confusao_xgboost.png
-│   └── shap_importance.png
-|── docs/
-|    |── analise.nd
-└── notebooks/
-    └── transacoesCartaoCredito.ipynb
-
-```
+- [ ] Calibrar o limiar em conjunto de validação separado e comparar com busca por custo mínimo.
+- [ ] Validação temporal (*time-series split*) para avaliar *concept drift*.
+- [ ] Tratar duplicados e checar qualidade de dados antes do split.
+- [ ] Testar reamostragem combinada (SMOTE + Tomek Links) contra o `scale_pos_weight`.
+- [ ] Custo por transação usando `Amount` (aprendizado sensível a custo dependente de exemplo).
+- [ ] Servir o modelo via API (FastAPI), somente se o projeto evoluir para uso real.
 
 ---
 
+## ▶️ Como Executar
 
-8. Como Executar o Projeto
+**Pré-requisitos:** Python 3.10+, Git e conexão com a internet (o dataset é baixado durante a execução).
 
+```bash
 # 1. Clonar o repositório
-git clone [https://github.com/Santosdevbjj/deteccao-de-anomalias-em-transacoes-em-python.git](https://github.com/Santosdevbjj/deteccao-de-anomalias-em-transacoes-em-python.git)
+git clone https://github.com/Santosdevbjj/deteccao-de-anomalias-em-transacoes-em-python.git
 cd deteccao-de-anomalias-em-transacoes-em-python
 
 # 2. Criar e ativar o ambiente virtual
 python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# venv\Scripts\activate   # Windows
+source venv/bin/activate      # Linux/Mac
+# venv\Scripts\activate       # Windows
 
 # 3. Instalar dependências
 pip install -r requirements.txt
 
-# 4. Executar Jupyter Notebook
+# 4. Executar o notebook
 jupyter notebook notebooks/transacoesCartaoCredito.ipynb
+```
 
+Ou abra direto no Colab pelo botão no topo deste README.
+
+## 🗂️ Estrutura do Repositório
+
+```text
+deteccao-de-anomalias-em-transacoes-em-python/
+├── .gitignore
+├── README.md
+├── requirements.txt
+├── assets/
+│   ├── distribui_classe.png
+│   ├── curva_precision_recall.png
+│   ├── matriz_confusao_xgboost.png
+│   └── shap_importance.png
+├── docs/
+│   └── analise.md
+└── notebooks/
+    └── transacoesCartaoCredito.ipynb
+```
+
+## 📚 Referências
+
+- Dal Pozzolo, A. et al. *Calibrating Probability with Undersampling for Unbalanced Classification*. IEEE CIDM, 2015.
+- Dal Pozzolo, A. et al. *Learned Lessons in Credit Card Fraud Detection from a Practitioner Perspective*. Expert Systems with Applications, 2014.
+- Dal Pozzolo, A. et al. *Credit Card Fraud Detection: A Realistic Modeling and a Novel Learning Strategy*. IEEE TNNLS, 2018.
+- Carcillo, F. et al. *Combining Unsupervised and Supervised Learning in Credit Card Fraud Detection*. Information Sciences, 2019.
+- Le Borgne, Y.-A. & Bontempi, G. *Reproducible Machine Learning for Credit Card Fraud Detection: Practical Handbook*.
+- Lundberg, S. M. & Lee, S.-I. *A Unified Approach to Interpreting Model Predictions*. NeurIPS, 2017.
 
 ---
 
-
-9. Próximos Passos (Plano de Engenharia em Produção)
-[ ] Dockerização: Empacotamento do modelo XGBoost serializado (joblib/ONNX) em imagem Docker.
-
-[ ] API de Inferência: Criação de endpoint REST/gRPC utilizando FastAPI para predição em tempo real com baixíssima latência (< 50ms).
-
-[ ] Monitoramento de Data Drift: Integração com Evidently AI para rastrear desvio de distribuição dos atributos (V1-V28) e degradação contínua do AUPRC.
-
-10. Referências Técnicas
-Dal Pozzolo, A. et al. Credit Card Fraud Detection: A Realistic Modeling and a Novel Learning Strategy. IEEE TNNLS, 2018.
-
-Lundberg, S. M., & Lee, S.-I. A Unified Approach to Interpreting Model Predictions. NIPS, 2017 (SHAP Framework).
-
-
-
-
-
----
+> *"O mercado de trabalho não contrata ferramenta, o mercado de trabalho contrata quem resolve problemas."* — Meigarom Lopes
 
 **Autor:** Sérgio Santos — Cientista de Dados | Ambientes Críticos e Governança de Dados
 
 [![Portfólio Sérgio Santos](https://img.shields.io/badge/Portfólio-Sérgio_Santos-111827?style=for-the-badge&logo=githubpages&logoColor=00eaff)](https://portfoliosantossergio.vercel.app)
 [![LinkedIn Sérgio Santos](https://img.shields.io/badge/LinkedIn-Sérgio_Santos-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/santossergioluiz)
-
-
-
-
-
-
-
-
-
