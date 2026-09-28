@@ -225,7 +225,6 @@ deteccao-de-anomalias-em-transacoes-em-python/
 
 ---
 
-> *"O mercado de trabalho não contrata ferramenta, o mercado de trabalho contrata quem resolve problemas."* — Meigarom Lopes
 
 **Autor:** Sérgio Santos — Cientista de Dados | Ambientes Críticos e Governança de Dados
 
