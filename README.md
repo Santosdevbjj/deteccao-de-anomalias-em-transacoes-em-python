@@ -4,6 +4,7 @@
 [![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-1.3%2B-orange.svg)](https://scikit-learn.org/)
 [![XGBoost](https://img.shields.io/badge/XGBoost-1.7%2B-green.svg)](https://xgboost.readthedocs.io/)
 [![SHAP](https://img.shields.io/badge/SHAP-XAI-red.svg)](https://shap.readthedocs.io/)
+[![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](LICENSE)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Santosdevbjj/deteccao-de-anomalias-em-transacoes-em-python/blob/main/notebooks/transacoesCartaoCredito.ipynb)
 
 **Bootcamp Bradesco - GenAI, Dados & Cyber (DIO)**
@@ -201,6 +202,7 @@ Ou abra direto no Colab pelo botão no topo deste README.
 ```text
 deteccao-de-anomalias-em-transacoes-em-python/
 ├── .gitignore
+├── LICENSE
 ├── README.md
 ├── requirements.txt
 ├── assets/
@@ -222,6 +224,10 @@ deteccao-de-anomalias-em-transacoes-em-python/
 - Carcillo, F. et al. *Combining Unsupervised and Supervised Learning in Credit Card Fraud Detection*. Information Sciences, 2019.
 - Le Borgne, Y.-A. & Bontempi, G. *Reproducible Machine Learning for Credit Card Fraud Detection: Practical Handbook*.
 - Lundberg, S. M. & Lee, S.-I. *A Unified Approach to Interpreting Model Predictions*. NeurIPS, 2017.
+
+## 📄 Licença
+
+Distribuído sob a licença **MIT**. Consulte o arquivo [LICENSE](LICENSE) para detalhes.
 
 ---
 
